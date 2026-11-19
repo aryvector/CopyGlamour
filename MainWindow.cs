@@ -27,6 +27,9 @@ public sealed class MainWindow : Window
     // How often the clipboard is checked for a copied glamour page: often enough to feel instant, rare enough to cost nothing.
     private const long ClipboardCheckIntervalMilliseconds = 1000;
 
+    // How often the bags, dresser and armoire are checked for the pieces: quick enough to update while you move items.
+    private const long OwnershipCheckIntervalMilliseconds = 1000;
+
     // Sources listed per piece; the rest move into a tooltip so an item sold by many NPCs doesn't stretch the table.
     private const int SourcesShownPerPiece = 3;
 
@@ -60,6 +63,8 @@ public sealed class MainWindow : Window
     private List<PieceRow> currentPieceRows = [];
     private string lastSeenClipboardText = "";
     private long nextClipboardCheckTime;
+    private OwnedItems.Ownership? ownership;
+    private long nextOwnershipCheckTime;
 
     public MainWindow(Plugin plugin)
         // The version in the title shows at a glance which build the game has loaded.
@@ -116,6 +121,7 @@ public sealed class MainWindow : Window
     {
         currentGlamour = glamour;
         currentPieceRows = pieceRows;
+        nextOwnershipCheckTime = 0;
         designName = DisplayName(glamour);
         return $"Loaded {pieceRows.Count} pieces. Untick any you don't want, then click Apply selected.";
     }
@@ -222,7 +228,23 @@ public sealed class MainWindow : Window
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
                 ImGui.SetTooltip("Saves everything you're wearing right now (as Glamourer shows it), so apply the glamour first.");
 
-            DrawPieceTable(pieceRows);
+            if (Environment.TickCount64 >= nextOwnershipCheckTime)
+            {
+                nextOwnershipCheckTime = Environment.TickCount64 + OwnershipCheckIntervalMilliseconds;
+                try
+                {
+                    ownership = plugin.OwnedItems.Find(pieceRows);
+                }
+                catch (Exception exception)
+                {
+                    Plugin.Log.Warning(exception, "Couldn't check which pieces you own");
+                    ownership = null;
+                }
+            }
+            if (ownership is { NotChecked.Count: > 0 })
+                ImGui.TextDisabled($"Not checked yet: {string.Join(", ", ownership.NotChecked)}. Open them once and the table updates.");
+
+            DrawPieceTable(pieceRows, ownership);
         }
 
         // ---- Recent glamours ----
@@ -246,7 +268,7 @@ public sealed class MainWindow : Window
         }
     }
 
-    private void DrawPieceTable(List<PieceRow> pieceRows)
+    private void DrawPieceTable(List<PieceRow> pieceRows, OwnedItems.Ownership? ownership)
     {
         if (!ImGui.BeginTable("##pieceRows", 6, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.SizingStretchProp)) return;
         ImGui.TableSetupColumn("Use", ImGuiTableColumnFlags.WidthFixed, UseColumnWidth);
@@ -294,6 +316,26 @@ public sealed class MainWindow : Window
             ImGui.TextUnformatted(pieceRow.Piece.SlotLabel);
             ImGui.TableNextColumn();
             ImGui.TextWrapped(pieceRow.Piece.ItemName.Length > 0 ? pieceRow.Piece.ItemName : "?");
+            if (pieceRow.Piece.ItemName.Length > 0 && ImGui.SmallButton("Copy name"))
+            {
+                // The game's search boxes (market board, armoire) want a plain apostrophe, not the page's curly one.
+                var copiedName = pieceRow.Piece.ItemName.Replace('’', '\'');
+                ImGui.SetClipboardText(copiedName);
+                statusMessage = $"Copied \"{copiedName}\".";
+            }
+            if (ownership != null && (pieceRow.SourceItemId != 0 || pieceRow.FacewearId != 0))
+            {
+                if (ownership.PlacesByRow.TryGetValue(pieceRow, out var places))
+                {
+                    ImGui.PushTextWrapPos(0);
+                    ImGui.TextColored(AppliedColor, $"Have: {string.Join(", ", places)}");
+                    ImGui.PopTextWrapPos();
+                }
+                else
+                {
+                    ImGui.TextDisabled("Not owned");
+                }
+            }
             ImGui.TableNextColumn();
             ImGui.TextWrapped(pieceRow.Piece.DyeNames.Count > 0 ? string.Join(" / ", pieceRow.Piece.DyeNames) : "–");
 

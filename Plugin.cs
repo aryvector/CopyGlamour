@@ -65,6 +65,13 @@ public sealed class Plugin : IDalamudPlugin
     // Waited for in Dispose, so a reload in the first seconds doesn't leave it reading game data after unload.
     private readonly Task itemSourcesBuild;
 
+    /// <summary>Where the player keeps each piece (bags, dresser, armoire, retainers...).</summary>
+    public OwnedItems OwnedItems { get; }
+
+    // Retainer items are saved about once a second while a retainer is open: often enough to catch a short visit.
+    private const long RetainerCheckIntervalMilliseconds = 1000;
+    private long nextRetainerCheckTime;
+
     // Glamourer's IPC functions, by the labels Glamourer.Api uses (Glamourer.SetItem.V3 etc.).
     private readonly ICallGateSubscriber<int, byte, ulong, IReadOnlyList<byte>, uint, ulong, int> glamourerSetItem;
     private readonly ICallGateSubscriber<int, byte, ulong, uint, ulong, int> glamourerSetBonusItem;
@@ -160,6 +167,9 @@ public sealed class Plugin : IDalamudPlugin
             }
         });
 
+        OwnedItems = new OwnedItems(DataManager, Configuration, () => PluginInterface.SavePluginConfig(Configuration));
+        Framework.Update += OnFrameworkUpdate;
+
         mainWindow = new MainWindow(this);
         WindowSystem.AddWindow(mainWindow);
 
@@ -176,6 +186,7 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        Framework.Update -= OnFrameworkUpdate;
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.OpenConfigUi -= mainWindow.Toggle;
@@ -183,6 +194,21 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.RemoveHandler(CommandName);
         // The build catches its own errors, so this only waits; 5 s caps an unload if it ever hangs.
         itemSourcesBuild.Wait(TimeSpan.FromSeconds(5));
+    }
+
+    private void OnFrameworkUpdate(IFramework framework)
+    {
+        if (Environment.TickCount64 < nextRetainerCheckTime) return;
+        nextRetainerCheckTime = Environment.TickCount64 + RetainerCheckIntervalMilliseconds;
+        try
+        {
+            OwnedItems.RememberOpenRetainer();
+        }
+        catch (Exception exception)
+        {
+            // Logged once a second at most; a failure here must not stop the game's update loop.
+            Log.Warning(exception, "Couldn't save the open retainer's items");
+        }
     }
 
     private void OnCommand(string command, string args)

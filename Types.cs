@@ -111,4 +111,20 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>Most recent first.</summary>
     public List<CopiedGlamour> RecentGlamours { get; set; } = [];
+
+    /// <summary>What each retainer held when last opened; the game only knows the retainer you have open.</summary>
+    public List<SavedRetainer> Retainers { get; set; } = [];
+}
+
+[Serializable]
+public sealed class SavedRetainer
+{
+    public ulong RetainerId { get; set; }
+
+    /// <summary>The character the retainer belongs to, so another character's retainers aren't listed.</summary>
+    public ulong OwnerContentId { get; set; }
+
+    public string Name { get; set; } = "";
+
+    public List<uint> ItemIds { get; set; } = [];
 }

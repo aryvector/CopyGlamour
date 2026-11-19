@@ -32,7 +32,10 @@ Pasting the page's link won't work, because Eorzea Collection blocks downloads t
 - **Revert** undoes all Glamourer changes on your character, including appearance changes.
 - **Save as Glamourer design** saves what you're wearing right now as a new design, so apply the glamour first. **Open saved design in Glamourer** then opens it.
 - **Where to get** lists gil vendors, currency and Grand Company vendors, and crafting recipes. **Map** puts a flag on the vendor and **Recipe** opens the crafting log. Garland Tools, Teamcraft and the Console Games Wiki list everything else, such as duty drops, quests and Mog Station items.
+- Under each item name, **Copy name** puts the name on the clipboard for the market board or the armoire search. A line also says where you already have the piece: equipped, inventory, armoury chest, saddlebag, glamour dresser (outfit sets too), armoire, a retainer, or unlocked for facewear.
 - **Recent glamours** keeps the last 20 glamours you loaded.
+
+The game only loads the saddlebag, dresser and armoire after you open them, and only knows the items of the retainer you have open. Until then the window lists them as not checked yet. The plugin remembers each retainer's items from the last time you opened it, so open each retainer once.
 
 Weapons only apply for a job that can use them. If Glamourer refuses one, the row names the job to switch to.
 
