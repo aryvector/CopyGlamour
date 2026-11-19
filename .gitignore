@@ -5,3 +5,5 @@ obj/
 *.user
 # Real pages saved for local parser checks: other people's glamour pages, not ours to publish.
 Tests/Fixtures/
+# Local notes, not for the public repo.
+docs/
