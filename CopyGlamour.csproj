@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Version>0.2.5.0</Version>
+    <AssemblyName>CopyGlamour</AssemblyName>
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
+    <!-- The recipe button calls the game's crafting log through a pointer. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- Manifest fields: shown in /xlplugins. -->
+    <Author>Ignes</Author>
+    <Name>Copy Glamour</Name>
+    <Punchline>Copy an Eorzea Collection glamour page and wear it through Glamourer.</Punchline>
+    <Description>Reads the gear and dyes from an Eorzea Collection glamour page (copied with Ctrl+A, Ctrl+C, or saved with Ctrl+S) and applies them to your character with Glamourer.
+Pick which pieces to apply, save the result as a Glamourer design, and see where to get each piece: vendors with their location, currency shops and crafting.
+Requires Glamourer.</Description>
+    <Tags>glamour;glamourer;eorzea collection</Tags>
+    <RepoUrl>https://github.com/aryvector/CopyGlamour</RepoUrl>
+    <!-- The plugin installer loads the icon from here, not from the zip. -->
+    <IconUrl>https://raw.githubusercontent.com/aryvector/CopyGlamour/main/images/icon.png</IconUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The parser checks are their own console project in Tests/ (see Tests/Program.cs). -->
+    <Compile Remove="Tests\**" />
+  </ItemGroup>
+</Project>

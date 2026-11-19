@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+# Real pages saved for local parser checks: other people's glamour pages, not ours to publish.
+Tests/Fixtures/

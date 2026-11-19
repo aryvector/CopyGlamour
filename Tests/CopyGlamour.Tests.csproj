@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Checks for the page parser and the recent-glamour settings round trip. Run from the plugin folder: "dotnet run" with the project option set to Tests. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\GlamourPageParser.cs" Link="GlamourPageParser.cs" />
+    <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Dalamud saves plugin settings with Newtonsoft.Json; same major version as Dalamud ships. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+</Project>
