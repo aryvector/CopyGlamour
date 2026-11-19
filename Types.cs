@@ -114,6 +114,21 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>What each retainer held when last opened; the game only knows the retainer you have open.</summary>
     public List<SavedRetainer> Retainers { get; set; } = [];
+
+    /// <summary>What each character's glamour dresser and armoire held when last opened; the game forgets them once closed.</summary>
+    public List<SavedCharacterStorage> CharacterStorages { get; set; } = [];
+}
+
+[Serializable]
+public sealed class SavedCharacterStorage
+{
+    public ulong OwnerContentId { get; set; }
+
+    /// <summary>Null until the dresser is opened on this character. Outfit set pieces are included.</summary>
+    public List<uint>? DresserItemIds { get; set; }
+
+    /// <summary>Null until the armoire is opened on this character.</summary>
+    public List<uint>? ArmoireItemIds { get; set; }
 }
 
 [Serializable]

@@ -30,12 +30,13 @@ Pasting the page's link won't work, because Eorzea Collection blocks downloads t
 
 - **Apply selected** puts the ticked pieces on you as a temporary Glamourer change. Each row says whether Glamourer accepted the piece.
 - **Revert** undoes all Glamourer changes on your character, including appearance changes.
-- **Save as Glamourer design** saves what you're wearing right now as a new design, so apply the glamour first. **Open saved design in Glamourer** then opens it.
-- **Where to get** lists gil vendors, currency and Grand Company vendors, and crafting recipes. **Map** puts a flag on the vendor and **Recipe** opens the crafting log. Garland Tools, Teamcraft and the Console Games Wiki list everything else, such as duty drops, quests and Mog Station items.
-- Under each item name, **Copy name** puts the name on the clipboard for the market board or the armoire search. A line also says where you already have the piece: equipped, inventory, armoury chest, saddlebag, glamour dresser (outfit sets too), armoire, a retainer, or unlocked for facewear.
+- **Save as Glamourer design…** asks for a name and saves what you're wearing right now as a new design, so apply the glamour first. **Open saved design in Glamourer** then opens it.
+- **Where to get** lists gil vendors, currency and Grand Company vendors, and crafting recipes. **Map** puts a flag on the vendor and **Recipe** opens the crafting log. **Look up** opens the item on Garland Tools, Teamcraft or the Console Games Wiki, which list everything else, such as duty drops, quests and Mog Station items.
+- Click an item's name to copy it for the market board or the armoire search. Under the name, a line says where you already have the piece: equipped, inventory, armoury chest, saddlebag, glamour dresser (outfit sets too), armoire, a retainer, or unlocked for facewear.
+- **Options** holds the auto-load setting and loading a page saved with Ctrl+S.
 - **Recent glamours** keeps the last 20 glamours you loaded.
 
-The game only loads the saddlebag, dresser and armoire after you open them, and only knows the items of the retainer you have open. Until then the window lists them as not checked yet. The plugin remembers each retainer's items from the last time you opened it, so open each retainer once.
+The game only knows what's in the dresser, the armoire and a retainer while you have it open. The plugin saves their contents each time you open one, and uses that copy after you close it, so open each once. Until then the window lists them as not checked yet. The saddlebag loads the first time you open it in a session.
 
 Weapons only apply for a job that can use them. If Glamourer refuses one, the row names the job to switch to.
 

@@ -202,12 +202,12 @@ public sealed class Plugin : IDalamudPlugin
         nextRetainerCheckTime = Environment.TickCount64 + RetainerCheckIntervalMilliseconds;
         try
         {
-            OwnedItems.RememberOpenRetainer();
+            OwnedItems.RememberOpenStorages();
         }
         catch (Exception exception)
         {
             // Logged once a second at most; a failure here must not stop the game's update loop.
-            Log.Warning(exception, "Couldn't save the open retainer's items");
+            Log.Warning(exception, "Couldn't save the open dresser, armoire or retainer");
         }
     }
 

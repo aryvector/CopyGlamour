@@ -100,48 +100,27 @@ public sealed unsafe class OwnedItems
             if (saddlebag == null || !saddlebag->IsLoaded) notChecked.Add("saddlebag");
         }
 
-        var mirageManager = MirageManager.Instance();
-        if (mirageManager == null || !mirageManager->PrismBoxLoaded)
-        {
-            notChecked.Add("glamour dresser");
-        }
-        else
-        {
-            var dresserItemIds = mirageManager->PrismBoxItemIds;
-            for (var dresserIndex = 0; dresserIndex < dresserItemIds.Length; dresserIndex++)
-            {
-                var itemId = dresserItemIds[dresserIndex] % HighQualityItemIdOffset;
-                if (itemId == 0) continue;
-                addPlaceForItem(itemId, "Glamour dresser");
-                if (!setPieceItemIdsBySetItemId.TryGetValue(itemId, out var setPieceItemIds)) continue;
-                // A set can be stored with only some pieces; slot numbers follow the MirageStoreSetItem columns,
-                // as ClientStructs documents for RestorePrismBoxSetItem.
-                for (var setSlot = 0; setSlot < setPieceItemIds.Length; setSlot++)
-                    if (setPieceItemIds[setSlot] != 0 && mirageManager->IsSetSlotUnlocked((uint)dresserIndex, setSlot))
-                        addPlaceForItem(setPieceItemIds[setSlot], "Glamour dresser (outfit)");
-            }
-        }
-
         var uiState = UIState.Instance();
         if (uiState != null)
         {
-            if (!uiState->Cabinet.IsCabinetLoaded())
-            {
-                notChecked.Add("armoire");
-            }
-            else
-            {
-                foreach (var itemRows in rowsByItemId)
-                    if (cabinetIdByItemId.TryGetValue(itemRows.Key, out var cabinetId) && uiState->Cabinet.IsItemInCabinet(cabinetId))
-                        addPlaceForItem(itemRows.Key, "Armoire");
-            }
+            // The game forgets the dresser and armoire once they're closed, so the copy saved when they were last open
+            // fills in; while one is open, its live contents are used.
+            var playerContentId = uiState->PlayerState.ContentId;
+            var savedStorage = configuration.CharacterStorages.Find(saved => saved.OwnerContentId == playerContentId);
+
+            var dresserItemIds = DresserItemIds() ?? (IEnumerable<uint>?)savedStorage?.DresserItemIds;
+            if (dresserItemIds == null) notChecked.Add("glamour dresser");
+            else foreach (var itemId in dresserItemIds) addPlaceForItem(itemId, "Glamour dresser");
+
+            var armoireItemIds = ArmoireItemIds(uiState) ?? (IEnumerable<uint>?)savedStorage?.ArmoireItemIds;
+            if (armoireItemIds == null) notChecked.Add("armoire");
+            else foreach (var itemId in armoireItemIds) addPlaceForItem(itemId, "Armoire");
 
             // Facewear is owned once it's unlocked; the unlock item is used up then.
             foreach (var pieceRow in pieceRows)
                 if (pieceRow.FacewearId != 0 && uiState->PlayerState.IsGlassesUnlocked((ushort)pieceRow.FacewearId))
                     addPlace(pieceRow, "Unlocked");
 
-            var playerContentId = uiState->PlayerState.ContentId;
             var savedRetainers = configuration.Retainers.Where(savedRetainer => savedRetainer.OwnerContentId == playerContentId).ToList();
             foreach (var savedRetainer in savedRetainers)
                 foreach (var itemId in savedRetainer.ItemIds)
@@ -160,11 +139,43 @@ public sealed unsafe class OwnedItems
         return new Ownership(placesByRow, notChecked);
     }
 
+    /// <summary>Everything in the glamour dresser, outfit set pieces included; null while the game hasn't loaded it.</summary>
+    private SortedSet<uint>? DresserItemIds()
+    {
+        var mirageManager = MirageManager.Instance();
+        if (mirageManager == null || !mirageManager->PrismBoxLoaded) return null;
+        var itemIds = new SortedSet<uint>();
+        var dresserItemIds = mirageManager->PrismBoxItemIds;
+        for (var dresserIndex = 0; dresserIndex < dresserItemIds.Length; dresserIndex++)
+        {
+            var itemId = dresserItemIds[dresserIndex] % HighQualityItemIdOffset;
+            if (itemId == 0) continue;
+            itemIds.Add(itemId);
+            if (!setPieceItemIdsBySetItemId.TryGetValue(itemId, out var setPieceItemIds)) continue;
+            // A set can be stored with only some pieces; slot numbers follow the MirageStoreSetItem columns,
+            // as ClientStructs documents for RestorePrismBoxSetItem.
+            for (var setSlot = 0; setSlot < setPieceItemIds.Length; setSlot++)
+                if (setPieceItemIds[setSlot] != 0 && mirageManager->IsSetSlotUnlocked((uint)dresserIndex, setSlot))
+                    itemIds.Add(setPieceItemIds[setSlot]);
+        }
+        return itemIds;
+    }
+
+    /// <summary>Everything in the armoire; null while the game hasn't loaded it.</summary>
+    private SortedSet<uint>? ArmoireItemIds(UIState* uiState)
+    {
+        if (!uiState->Cabinet.IsCabinetLoaded()) return null;
+        var itemIds = new SortedSet<uint>();
+        foreach (var (itemId, cabinetId) in cabinetIdByItemId)
+            if (uiState->Cabinet.IsItemInCabinet(cabinetId)) itemIds.Add(itemId);
+        return itemIds;
+    }
+
     /// <summary>
-    /// The game only holds the items of the retainer you have open, so this saves them to the settings while one is open.
-    /// Called about once a second, also while the window is closed.
+    /// The game only holds the dresser and armoire while they're open, and only the retainer you have open,
+    /// so this saves their items to the settings whenever one is open. Called about once a second, also while the window is closed.
     /// </summary>
-    public void RememberOpenRetainer()
+    public void RememberOpenStorages()
     {
         var inventoryManager = InventoryManager.Instance();
         var retainerManager = RetainerManager.Instance();
@@ -172,6 +183,21 @@ public sealed unsafe class OwnedItems
         if (inventoryManager == null || retainerManager == null || uiState == null) return;
         var playerContentId = uiState->PlayerState.ContentId;
         if (playerContentId == 0) return;
+
+        // shortcut: an empty dresser or armoire isn't saved, in case the game says "loaded" before the items arrive;
+        // so emptying one completely keeps the old list until something is stored again.
+        var savedStorage = configuration.CharacterStorages.Find(saved => saved.OwnerContentId == playerContentId);
+        var dresserItemIds = DresserItemIds();
+        var armoireItemIds = ArmoireItemIds(uiState);
+        var dresserChanged = dresserItemIds is { Count: > 0 } && savedStorage?.DresserItemIds?.SequenceEqual(dresserItemIds) != true;
+        var armoireChanged = armoireItemIds is { Count: > 0 } && savedStorage?.ArmoireItemIds?.SequenceEqual(armoireItemIds) != true;
+        if (dresserChanged || armoireChanged)
+        {
+            if (savedStorage == null) configuration.CharacterStorages.Add(savedStorage = new SavedCharacterStorage { OwnerContentId = playerContentId });
+            if (dresserChanged) savedStorage.DresserItemIds = [.. dresserItemIds!];
+            if (armoireChanged) savedStorage.ArmoireItemIds = [.. armoireItemIds!];
+            saveConfiguration();
+        }
 
         // A retainer you dismissed for good disappears from the game's list, so it goes from the settings too.
         if (retainerManager->IsReady)

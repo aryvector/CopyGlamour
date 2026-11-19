@@ -157,27 +157,34 @@ public sealed class MainWindow : Window
         }
         ImGui.EndDisabled();
         ImGui.SameLine();
-        ImGui.TextDisabled("(Ctrl+A, Ctrl+C on the glamour page first)");
-        ImGui.SameLine();
         // "###openGlamourer" keeps the button's ID the same while its label changes.
         var openGlamourerLabel = plugin.SavedDesignId != Guid.Empty ? "Open saved design in Glamourer###openGlamourer" : "Open Glamourer###openGlamourer";
         if (ImGui.Button(openGlamourerLabel) && !plugin.OpenGlamourer())
             statusMessage = "Couldn't open Glamourer: it isn't installed or isn't enabled.";
-
-        var loadFromClipboardAutomatically = plugin.Configuration.LoadFromClipboardAutomatically;
-        if (ImGui.Checkbox("Load automatically when I copy a glamour page (while this window is open)", ref loadFromClipboardAutomatically))
+        // The hint is for first use; once a glamour is loaded it's only clutter.
+        if (currentGlamour == null)
         {
-            plugin.Configuration.LoadFromClipboardAutomatically = loadFromClipboardAutomatically;
-            Plugin.PluginInterface.SavePluginConfig(plugin.Configuration);
+            ImGui.SameLine();
+            ImGui.TextDisabled("(Ctrl+A, Ctrl+C on the glamour page first)");
         }
 
-        ImGui.TextUnformatted("Or the path of a page saved with Ctrl+S:");
-        ImGui.SetNextItemWidth(-LoadButtonWidth);
-        var pressedEnter = ImGui.InputText("##savedPagePath", ref savedPagePath, SavedPagePathMaxLength, ImGuiInputTextFlags.EnterReturnsTrue);
-        ImGui.SameLine();
-        ImGui.BeginDisabled(isBusy || savedPagePath.Trim().Length == 0);
-        if (ImGui.Button("Load") || (pressedEnter && savedPagePath.Trim().Length > 0)) StartLoad(savedPagePath.Trim());
-        ImGui.EndDisabled();
+        if (ImGui.CollapsingHeader("Options"))
+        {
+            var loadFromClipboardAutomatically = plugin.Configuration.LoadFromClipboardAutomatically;
+            if (ImGui.Checkbox("Load automatically when I copy a glamour page (while this window is open)", ref loadFromClipboardAutomatically))
+            {
+                plugin.Configuration.LoadFromClipboardAutomatically = loadFromClipboardAutomatically;
+                Plugin.PluginInterface.SavePluginConfig(plugin.Configuration);
+            }
+
+            ImGui.TextUnformatted("Or the path of a page saved with Ctrl+S:");
+            ImGui.SetNextItemWidth(-LoadButtonWidth);
+            var pressedEnter = ImGui.InputText("##savedPagePath", ref savedPagePath, SavedPagePathMaxLength, ImGuiInputTextFlags.EnterReturnsTrue);
+            ImGui.SameLine();
+            ImGui.BeginDisabled(isBusy || savedPagePath.Trim().Length == 0);
+            if (ImGui.Button("Load") || (pressedEnter && savedPagePath.Trim().Length > 0)) StartLoad(savedPagePath.Trim());
+            ImGui.EndDisabled();
+        }
 
         if (statusMessage.Length > 0) ImGui.TextWrapped(statusMessage);
 
@@ -211,22 +218,27 @@ public sealed class MainWindow : Window
             ImGui.SameLine();
             ImGui.BeginDisabled(isBusy);
             if (ImGui.Button("Revert")) RunBusy("Reverting…", plugin.RevertGlamour);
-            ImGui.EndDisabled();
-
-            ImGui.TextUnformatted("Glamourer design name:");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(DesignNameInputWidth);
-            ImGui.InputText("##designName", ref designName, DesignNameMaxLength);
-            ImGui.SameLine();
-            ImGui.BeginDisabled(isBusy || designName.Trim().Length == 0);
-            if (ImGui.Button("Save as Glamourer design"))
-            {
-                var nameToSave = designName.Trim();
-                RunBusy("Saving the design…", () => plugin.SaveAsGlamourerDesign(nameToSave));
-            }
+            // The name box only matters when saving, so it lives in a popup.
+            if (ImGui.Button("Save as Glamourer design…")) ImGui.OpenPopup("saveDesign");
             ImGui.EndDisabled();
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
                 ImGui.SetTooltip("Saves everything you're wearing right now (as Glamourer shows it), so apply the glamour first.");
+            if (ImGui.BeginPopup("saveDesign"))
+            {
+                ImGui.TextUnformatted("Design name:");
+                ImGui.SetNextItemWidth(DesignNameInputWidth);
+                var pressedEnterOnName = ImGui.InputText("##designName", ref designName, DesignNameMaxLength, ImGuiInputTextFlags.EnterReturnsTrue);
+                ImGui.BeginDisabled(isBusy || designName.Trim().Length == 0);
+                if (ImGui.Button("Save") || (pressedEnterOnName && !isBusy && designName.Trim().Length > 0))
+                {
+                    var nameToSave = designName.Trim();
+                    RunBusy("Saving the design…", () => plugin.SaveAsGlamourerDesign(nameToSave));
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.EndDisabled();
+                ImGui.EndPopup();
+            }
 
             if (Environment.TickCount64 >= nextOwnershipCheckTime)
             {
@@ -316,12 +328,18 @@ public sealed class MainWindow : Window
             ImGui.TextUnformatted(pieceRow.Piece.SlotLabel);
             ImGui.TableNextColumn();
             ImGui.TextWrapped(pieceRow.Piece.ItemName.Length > 0 ? pieceRow.Piece.ItemName : "?");
-            if (pieceRow.Piece.ItemName.Length > 0 && ImGui.SmallButton("Copy name"))
+            // Clicking the name copies it: a button on every row was clutter.
+            if (pieceRow.Piece.ItemName.Length > 0 && ImGui.IsItemHovered())
             {
-                // The game's search boxes (market board, armoire) want a plain apostrophe, not the page's curly one.
-                var copiedName = pieceRow.Piece.ItemName.Replace('’', '\'');
-                ImGui.SetClipboardText(copiedName);
-                statusMessage = $"Copied \"{copiedName}\".";
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                ImGui.SetTooltip("Click to copy the name");
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                {
+                    // The game's search boxes (market board, armoire) want a plain apostrophe, not the page's curly one.
+                    var copiedName = pieceRow.Piece.ItemName.Replace('’', '\'');
+                    ImGui.SetClipboardText(copiedName);
+                    statusMessage = $"Copied \"{copiedName}\".";
+                }
             }
             if (ownership != null && (pieceRow.SourceItemId != 0 || pieceRow.FacewearId != 0))
             {
@@ -353,7 +371,10 @@ public sealed class MainWindow : Window
             {
                 var sourcesForItem = itemSources.SourcesFor(pieceRow.SourceItemId);
                 if (sourcesForItem.Count == 0)
-                    ImGui.TextWrapped("Not sold by any vendor or crafted: a drop, quest, achievement or Mog Station item. See the links below.");
+                {
+                    ImGui.TextDisabled("No vendor or recipe");
+                    if (ImGui.IsItemHovered()) ImGui.SetTooltip("A drop, quest, achievement or Mog Station item. Look up says where.");
+                }
 
                 for (var sourceIndex = 0; sourceIndex < sourcesForItem.Count && sourceIndex < SourcesShownPerPiece; sourceIndex++)
                 {
@@ -392,14 +413,17 @@ public sealed class MainWindow : Window
                         ImGui.SetTooltip(string.Join("\n", sourcesForItem.Skip(SourcesShownPerPiece).Select(describeSource)));
                 }
 
-                // Item databases list every source, including duty drops, quests and the Mog Station.
-                if (ImGui.SmallButton("Garland Tools")) Util.OpenLink($"https://www.garlandtools.org/db/#item/{pieceRow.SourceItemId}");
-                ImGui.SameLine();
-                if (ImGui.SmallButton("Teamcraft")) Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{pieceRow.SourceItemId}");
-                ImGui.SameLine();
-                // The wiki has no item-ID URLs; its search jumps straight to the page on an exact name match.
-                if (ImGui.SmallButton("Wiki"))
-                    Util.OpenLink($"https://ffxiv.consolegameswiki.com/wiki/Special:Search?search={Uri.EscapeDataString(pieceRow.Piece.ItemName.Replace('’', '\''))}");
+                // Item databases list every source, including duty drops, quests and the Mog Station; one menu instead of three buttons.
+                if (ImGui.SmallButton("Look up")) ImGui.OpenPopup("lookUp");
+                if (ImGui.BeginPopup("lookUp"))
+                {
+                    if (ImGui.MenuItem("Garland Tools")) Util.OpenLink($"https://www.garlandtools.org/db/#item/{pieceRow.SourceItemId}");
+                    if (ImGui.MenuItem("Teamcraft")) Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{pieceRow.SourceItemId}");
+                    // The wiki has no item-ID URLs; its search jumps straight to the page on an exact name match.
+                    if (ImGui.MenuItem("Console Games Wiki"))
+                        Util.OpenLink($"https://ffxiv.consolegameswiki.com/wiki/Special:Search?search={Uri.EscapeDataString(pieceRow.Piece.ItemName.Replace('’', '\''))}");
+                    ImGui.EndPopup();
+                }
             }
 
             // Result
