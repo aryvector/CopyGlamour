@@ -354,6 +354,10 @@ public sealed class MainWindow : Window
                 if (ImGui.SmallButton("Garland Tools")) Util.OpenLink($"https://www.garlandtools.org/db/#item/{pieceRow.SourceItemId}");
                 ImGui.SameLine();
                 if (ImGui.SmallButton("Teamcraft")) Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{pieceRow.SourceItemId}");
+                ImGui.SameLine();
+                // The wiki has no item-ID URLs; its search jumps straight to the page on an exact name match.
+                if (ImGui.SmallButton("Wiki"))
+                    Util.OpenLink($"https://ffxiv.consolegameswiki.com/wiki/Special:Search?search={Uri.EscapeDataString(pieceRow.Piece.ItemName.Replace('’', '\''))}");
             }
 
             // Result

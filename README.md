@@ -31,7 +31,7 @@ Pasting the page's link won't work, because Eorzea Collection blocks downloads t
 - **Apply selected** puts the ticked pieces on you as a temporary Glamourer change. Each row says whether Glamourer accepted the piece.
 - **Revert** undoes all Glamourer changes on your character, including appearance changes.
 - **Save as Glamourer design** saves what you're wearing right now as a new design, so apply the glamour first. **Open saved design in Glamourer** then opens it.
-- **Where to get** lists gil vendors, currency and Grand Company vendors, and crafting recipes. **Map** puts a flag on the vendor and **Recipe** opens the crafting log. Garland Tools and Teamcraft list everything else, such as duty drops, quests and Mog Station items.
+- **Where to get** lists gil vendors, currency and Grand Company vendors, and crafting recipes. **Map** puts a flag on the vendor and **Recipe** opens the crafting log. Garland Tools, Teamcraft and the Console Games Wiki list everything else, such as duty drops, quests and Mog Station items.
 - **Recent glamours** keeps the last 20 glamours you loaded.
 
 Weapons only apply for a job that can use them. If Glamourer refuses one, the row names the job to switch to.
