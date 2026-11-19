@@ -3,7 +3,7 @@
     "Author": "Ignes",
     "Name": "Copy Glamour",
     "InternalName": "CopyGlamour",
-    "AssemblyVersion": "0.2.5.0",
+    "AssemblyVersion": "0.2.6.0",
     "Description": "Reads the gear and dyes from an Eorzea Collection glamour page (copied with Ctrl+A, Ctrl+C, or saved with Ctrl+S) and applies them to your character with Glamourer.\r\nPick which pieces to apply, save the result as a Glamourer design, and see where to get each piece: vendors with their location, currency shops and crafting.\r\nRequires Glamourer.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/aryvector/CopyGlamour",
@@ -20,8 +20,8 @@
     "IconUrl": "https://raw.githubusercontent.com/aryvector/CopyGlamour/main/images/icon.png",
     "Punchline": "Copy an Eorzea Collection glamour page and wear it through Glamourer.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/aryvector/CopyGlamour/releases/download/v0.2.5.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/aryvector/CopyGlamour/releases/download/v0.2.5.0/latest.zip",
-    "LastUpdate": 1795105669
+    "DownloadLinkInstall": "https://github.com/aryvector/CopyGlamour/releases/download/v0.2.6.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/aryvector/CopyGlamour/releases/download/v0.2.6.0/latest.zip",
+    "LastUpdate": 1795117785
   }
 ]
