@@ -56,7 +56,7 @@ The build puts `latest.zip` in `bin/Release/CopyGlamour/`. `Tests` checks the pa
 ## Release
 
 1. Raise `<Version>` in `CopyGlamour.csproj`.
-2. Commit, then tag and push: `git tag v0.2.6.0 && git push origin main --tags`.
+2. Commit, then tag and push: `git tag v1.0.0.0 && git push origin main --tags`.
 
 The release workflow builds the plugin, runs the checks, publishes `latest.zip` and updates `repo.json`. Players get the update the next time they start the game.
 
