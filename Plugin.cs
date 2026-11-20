@@ -72,6 +72,9 @@ public sealed class Plugin : IDalamudPlugin
     private const long RetainerCheckIntervalMilliseconds = 1000;
     private long nextRetainerCheckTime;
 
+    // A failure that repeats every second (say, a game patch moved a field) is logged once per session, not every second.
+    private bool storageSaveFailureLogged;
+
     // Glamourer's IPC functions, by the labels Glamourer.Api uses (Glamourer.SetItem.V3 etc.).
     private readonly ICallGateSubscriber<int, byte, ulong, IReadOnlyList<byte>, uint, ulong, int> glamourerSetItem;
     private readonly ICallGateSubscriber<int, byte, ulong, uint, ulong, int> glamourerSetBonusItem;
@@ -206,8 +209,10 @@ public sealed class Plugin : IDalamudPlugin
         }
         catch (Exception exception)
         {
-            // Logged once a second at most; a failure here must not stop the game's update loop.
-            Log.Warning(exception, "Couldn't save the open dresser, armoire or retainer");
+            // Caught: a failure here must not stop the game's update loop.
+            if (storageSaveFailureLogged) return;
+            storageSaveFailureLogged = true;
+            Log.Warning(exception, "Couldn't save the open dresser, armoire or retainer (logged once per session)");
         }
     }
 

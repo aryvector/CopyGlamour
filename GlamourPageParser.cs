@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 
 namespace CopyGlamour;
 
+// GearPiece and CopiedGlamour are stored by name in the settings file (the recent list): don't rename or move them.
+
 /// <summary>One gear entry as Eorzea Collection lists it: its slot label, item name and dye names (as written on the page).</summary>
 public sealed record GearPiece(string SlotLabel, string ItemName, IReadOnlyList<string> DyeNames);
 

@@ -126,14 +126,20 @@ public sealed unsafe class OwnedItems
                 foreach (var itemId in savedRetainer.ItemIds)
                     addPlaceForItem(itemId, $"Retainer {savedRetainer.Name}");
 
+            // With the game's retainer list loaded, only retainers never opened are named, so a character without any sees no note.
             var retainerManager = RetainerManager.Instance();
-            var retainersNotSeen = 0;
             if (retainerManager != null && retainerManager->IsReady)
+            {
+                var retainersNotSeen = 0;
                 foreach (var retainer in retainerManager->Retainers)
                     if (retainer.RetainerId != 0 && savedRetainers.All(savedRetainer => savedRetainer.RetainerId != retainer.RetainerId))
                         retainersNotSeen++;
-            if (savedRetainers.Count == 0) notChecked.Add("retainers");
-            else if (retainersNotSeen > 0) notChecked.Add($"{retainersNotSeen} retainer(s)");
+                if (retainersNotSeen > 0) notChecked.Add(savedRetainers.Count == 0 ? "retainers" : $"{retainersNotSeen} retainer(s)");
+            }
+            else if (savedRetainers.Count == 0)
+            {
+                notChecked.Add("retainers");
+            }
         }
 
         return new Ownership(placesByRow, notChecked);

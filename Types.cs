@@ -101,6 +101,8 @@ public sealed record NpcPlace(uint TerritoryId, uint MapId, float MapX, float Ma
 /// </summary>
 public sealed record ItemSource(ItemSourceKind Kind, string Seller, string Cost, NpcPlace? Place, uint RecipeId);
 
+// The settings file stores this class's name, and those of the classes below and of CopiedGlamour and GearPiece.
+// Don't rename or move them: players' files would no longer load, and the plugin would start over with empty settings.
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
@@ -119,6 +121,7 @@ public sealed class Configuration : IPluginConfiguration
     public List<SavedCharacterStorage> CharacterStorages { get; set; } = [];
 }
 
+// Stored by name in the settings file: don't rename or move (see Configuration).
 [Serializable]
 public sealed class SavedCharacterStorage
 {
@@ -131,6 +134,7 @@ public sealed class SavedCharacterStorage
     public List<uint>? ArmoireItemIds { get; set; }
 }
 
+// Stored by name in the settings file: don't rename or move (see Configuration).
 [Serializable]
 public sealed class SavedRetainer
 {
